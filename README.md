@@ -15,11 +15,12 @@
 
 ### Project Overview
 
-This project aims to create a predictive model in python for the segmentation of customers with heart disease. The model enables change of marketing strategy from conventional mass marketing to highly targeted marketing campaign that is more cost efficient.
+This project aims to create a model in python to predict if customers will default in their next month credit card payment. The model can help credit card company to allocate appropriate resources to assit customer that has difficult making credit card payment, thereby improving receiving and cash flow.
 
 ### Data Sources
 
-Patient Data: The dataset that is used to construct the model is "cardio_data.csv". It contains the required detail to understand the impact on heart. Detail information of the data can be found in "Data_Dictionary.pdf".
+Taiwan Credit Card Payment Data: The dataset that is used to construct the model is "CC_Default.csv". It is a subset of original data containing customer information and their 6 months credit card payment details. 
+Source: Lichman, M. (2013). UCI Machine Learning Repository https://archive.ics.uci.edu/dataset/350/default+of+credit+card+clients. Irvine, CA: University of California, School of Information and Computer Science.
 
 ### Tools
 
@@ -31,86 +32,49 @@ Patient Data: The dataset that is used to construct the model is "cardio_data.cs
   - Statsmodels
   - SciPy
   - scikit-learn
-  - kmodes
-  - kneed
 
 ### Data Cleaning/Preparation
 
 In preparing the data, following tasks are performed:
-1. Data loading
-2. Inspection of data including data type, missing data, unit of each data, any spelling error from data entry for object datatype
-3. Removing outliers
-4. Drop irrelevant features
+1. Data loading.
+2. Inspection of data including data type and missing data.
 
 ### Exploratory Data Analysis
 
-EDA involves finding relation of features to heart disease:
-1. Graphical visualization
-2. Chi-squared test
-3. Feature engineering - BMI, MAP
-4. Feature creation - clustering (After splitting data to training and testing)
+EDA involves finding relation of features to default payment in next month:
+1. Plot univariate distribution.
+2. Feature engineering: Summarizing repayment status of all 6 months and create new feature PAY_AGG. Finding linear relationship in default payment rate of each PAY_AGG group
+3. Categorizing amount in bill statement and amount paid by segregating data into bins with different width, thereby creating better distribution profile. Finding linear relationship in default payment rate of each group of amount in bill statement and amount paid.
+4. Finding relationship between age and default payment.
+5. Removing unknown from category features (education, marriage).
+6. Finding relation ship of categorical features to target variables by using mosaic graph and chi-aquare test.
+7. Drop all irrelavent features including ID.
+8. Check multicollinearity by ploting correlation heatmap and VIF.
+9. Remove features that are highly correlated.
 
 ### Model Building and Evaluation
 
-Different machine learning models are created and evaluated with both cross-validation and using test data. Hyperparameters optimization is performed to look for the best parameters for the model.
+Categorical features (sex, marriage, education) are encoded with one hot encoding to prevent ordinal effect.
+Imbalance data is processed with SMOTE and then normalized.
 
-```
-# Define the classifiers
-classifiers = {
-    'XGBClassifier': XGBClassifier(random_state=SEED),
-    'LogisticRegression': LogisticRegression(random_state=SEED),
-    'DecisionTreeClassifier': DecisionTreeClassifier(random_state=SEED),
-    'RandomForestClassifier': RandomForestClassifier(random_state=SEED),
-    'KNeighborsClassifier': KNeighborsClassifier()
-}
-
-# Define the parameter grids for each classifier
-param_grids = {
-    'XGBClassifier': {'classifier__max_depth': [3, 5, 7], 'classifier__learning_rate': [0.1, 0.01, 0.05],
-                     'classifier__n_estimators': [100,200,300], 'classifier__min_child_weight': [1,3,5],
-                     'classifier__gamma': [0.0, 0.1, 0.2], 'classifier__subsample': [0.8,0.9,1.0],
-                     'classifier__colsample_bytree': [0.8,0.9,1.0]},
-    'LogisticRegression': {'classifier__C': [1, 10, 20], 'classifier__solver': ['lbfgs', 'liblinear']},
-    'DecisionTreeClassifier': {'classifier__max_depth': [3, 5, 25], 'classifier__max_leaf_nodes': [10,20,100]},
-    'RandomForestClassifier': {'classifier__n_estimators': [100,300,500], 'classifier__max_depth': [3, 10, 50], 'classifier__max_leaf_nodes': [20,100,250]},
-    'KNeighborsClassifier': {'classifier__n_neighbors': [5, 30, 50], 'classifier__weights': ['uniform','distance']}
-}
-
-# Create pipelines for each classifier
-pipelines = {name: Pipeline([('classifier', clf)]) for name, clf in classifiers.items()}
-
-# Perform grid search for each classifier
-results = {}
-for name, pipeline in pipelines.items():
-    grid_search = GridSearchCV(pipeline, param_grids[name], cv=5, scoring='accuracy', n_jobs=-1)
-    grid_search.fit(x_train, y_train)
-    results[name] = {
-        'best_params': grid_search.best_params_,
-        'best_score': grid_search.best_score_,
-        'cv_results': grid_search.cv_results_
-    }
-```
+Different machine learning models including logistic regression, random forest, and SVM are created and evaluated with confusion matrix.
+ANN model is also created with dropout and earlystopping in training.
 
 ### Results/Findings
 
-The final model Decision Tree is selected based on the following criterion:
-1. The performance of the model
-2. The computation cost of the model
-3. Interpretability of the model when presenting to stake holders.
+The models are compared based on the evaluation metrics. The Random Forest model has the lowest accuracy (0.74) and highest F1-score (0.51), indicating even though overall correctness of the model is slightly lower, it has better mean of precision and recall. The Random Forest model also has lowest precision (0.44) but almost two times higher recall (0.61) for the "Default" class compared to other model, suggesting it is best at correctly identifying defaults from actual defaults. A higher rate of false negatives is acceptable in this case as the actions based on the prediction (e.g. sending payment reminder to customer) is not likely to cause costly consequences.
 
-The final model achieves 90% accuracy with 91% precision and 90% recall.
-The top 3 features with highest contribution to predicting heart disease in this model are Clusters, Mean Arterial Pressure, and Age.
+Given a much better recall and comparably similat accuracy, precision as well as f1 score, the Random Forest model appears to be the best choice among the options to achieve the objective of the model.
+Besides that, Ramdom Forest requires less computational power and is more interpretable than other models. Its superior performance on the specific key metrics justifies its use in this context.
 
 ### Recommendations
 
-The model's result is sufficiently high in differentiating customers who have heart disease or likely to develop heart disease. Below are recommended using the model:
-- Customized advertisement for this specific group of customers
-- Customized service solutions
-- Customized product recommendations
+The models are struggling with minority class. Training models with full dataset instead of a subset is recommended.
+Hyperparameters of the models should be optimized to get best result.
 
 ### Limitations
 
-Clustering technique used in this model needs careful adjustment based on the sample demographics. To maintain the high accuarcy, the sample data distribution used for the model should be representative of the unknown test data distribution, resulting in limited application.
+Some research on domain knowledge is required to properly interpret the data.
 
 ### References
-- [kaggle](https://www.kaggle.com/datasets/sulianova/cardiovascular-disease-dataset)
+- [UCI](https://archive.ics.uci.edu/dataset/350/default+of+credit+card+clients)
