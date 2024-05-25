@@ -32,6 +32,7 @@ Source: Lichman, M. (2013). UCI Machine Learning Repository https://archive.ics.
   - Statsmodels
   - SciPy
   - scikit-learn
+  - tensorflow
 
 ### Data Cleaning/Preparation
 
